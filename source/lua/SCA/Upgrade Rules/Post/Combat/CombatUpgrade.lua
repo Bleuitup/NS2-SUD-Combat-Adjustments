@@ -9,6 +9,17 @@ function CombatUpgrade:SetAlternativeRequirements(upgradeIds)
 	self.alternativeRequirements = upgradeIds
 end
 
+-- An upgrade can also be tied to a lifeform: it can then only be bought by a player who owns
+-- that lifeform's upgrade, which means being that lifeform or evolving into it in the same
+-- purchase. Combat takes the lifeform upgrade away again when the player dies.
+function CombatUpgrade:GetLifeformRequirement()
+	return self.lifeformRequirement
+end
+
+function CombatUpgrade:SetLifeformRequirement(upgradeId)
+	self.lifeformRequirement = upgradeId
+end
+
 -- Every upgrade id that satisfies this upgrade's requirement, or nil if it has none.
 function CombatUpgrade:GetAllRequirements()
 

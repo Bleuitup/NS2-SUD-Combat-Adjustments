@@ -3,6 +3,7 @@
 --   1. An upgrade's requirement can be met by any one of several upgrades
 --      (CombatUpgrade:GetAllRequirements).
 --   2. Hive traits are locked by the hive trait rule when the "Hive Traits" piece is loaded.
+--   3. An upgrade can be tied to a lifeform (CombatUpgrade:GetLifeformRequirement).
 
 local kSpendResourcesSoundName = PrecacheAsset("sound/NS2.fev/marine/common/player_spend_nanites")
 
@@ -65,6 +66,10 @@ function Player:CoEnableUpgrade(upgrades)
 				end
 			end
         end
+
+        -- Upgrades tied to a lifeform (Advanced Swipe and the Fade).
+        local lifeformRequirement = upgrade:GetLifeformRequirement()
+        local wrongLifeform = lifeformRequirement ~= nil and not self:GetHasCombatUpgrade(lifeformRequirement)
 
         -- Hive trait rule, checked against what the player owns right now. That includes the
         -- upgrades accepted earlier in this same purchase.
@@ -131,6 +136,8 @@ function Player:CoEnableUpgrade(upgrades)
 			self:spendlvlHints("hardCapped", upgrade:GetTextCode())
         elseif alreadyGotUpgrade then
             self:spendlvlHints("already_owned", upgrade:GetTextCode())
+        elseif wrongLifeform then
+            self:SendDirectMessage(string.format("%s can only be bought as a %s.", upgrade:GetDescription(), GetUpgradeFromId(lifeformRequirement):GetDescription()))
         elseif hiveTraitLockMessage then
             self:SendDirectMessage(hiveTraitLockMessage)
         elseif noRoom then
