@@ -43,12 +43,15 @@ end
 -- need "Upgrade Rules".
 local pieces = {
 
+"Advanced Swipe",
 "Alien Abilities",
 "Aura",
 "Focus",
 "Hitpoints",
 "Hive Traits",
 "Kill XP",
+"Resupply",
+"Spawn Protection",
 "Stomp",
 "Tier Scaling",
 "Upgrade Rules",
