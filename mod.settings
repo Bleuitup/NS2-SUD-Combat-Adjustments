@@ -1,0 +1,8 @@
+name        = "NS2 SUD Combat Adjustments"
+source_dir  = "source"
+output_dir  = "output"
+description = [=[]=]
+image       = "preview.jpg"
+tag_modtype = ""
+tag_support = ""
+publish_id = 3572663596
