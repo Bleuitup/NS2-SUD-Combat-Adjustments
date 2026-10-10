@@ -48,7 +48,7 @@ local pieces = {
 "Focus",
 "Hitpoints",
 "Hive Traits",
-"LF Costs and Score",
+"Kill XP",
 "Stomp",
 "Tier Scaling",
 "Upgrade Rules",
