@@ -1,8 +1,90 @@
 name        = "NS2 SUD Combat Adjustments"
 source_dir  = "source"
 output_dir  = "output"
-description = ""
+description = [=[mod id 3572663596
+
+[h1]NS2 SUD Combat Adjustments (SCA)[/h1]
+[b]Requires:[/b] the NS2 Combat mod, loaded alongside SCA.
+
+[b]TL;DR:[/b] Combat, rebalanced to play closer to the semi-competitive game NS2 Sudamerica runs on its public server. That server runs Blast to the Past on top of the Community Balance Mod, so several changes here come from there, including nu vanilla changes. This list is only what SCA changes on top of Combat.
+
+[hr][/hr]
+
+[h1]ALIENS[/h1]
+[h2]Traits[/h2]
+[list]
+[*][b]No more stacking one hive type[/b] You can't take a second Crag, Shift or Shade trait until you have one of each, and no third until you have two of each. Stacking Carapace, Regeneration and Vampirism made aliens far too hard to kill. Locked traits show in red in the evolve menu, and hovering one tells you what to take first
+[*][b]Carapace[/b] grows with your tiers instead of giving the full late-game armor from the first point
+[*][b]Tier 3 health[/b] slightly lower: it now adds as much as Tier 2 does
+[*][b]Focus[/b] 2 points -> 1, and its bonus is vanilla's +33% (Combat had +34%)
+[*][b]Aura[/b] only shows an enemy's health while that enemy is parasited [i](originally from CompMod)[/i]
+[*][b]Vampirism[/b] works on Exos
+[/list]
+
+[h2]Skulk[/h2]
+[list]
+[*][b]Leap energy[/b] 45 -> 55 [i](CompMod value)[/i]
+[*][b]Vampirism[/b] heals about a fifth less per bite [i](CompMod value)[/i]
+[*][b]Xenocide[/b] removed
+[/list]
+
+[h2]Lerk[/h2]
+[list]
+[*][b]Health[/b] 180 -> 170 [i](CompMod value)[/i]
+[*][b]Spike damage[/b] 5 -> 5.5
+[/list]
+
+[h2]Fade[/h2]
+[list]
+[*][b]Advanced Swipe[/b] new upgrade: 1 point, needs Tier 3, +8% Swipe damage
+[/list]
+
+[h2]Onos[/h2]
+[list]
+[*][b]Bone Shield[/b] 1000 -> 600 hitpoints
+[*][b]Stomp[/b] no longer knocks Marines down, it webs them instead. Damage 40 -> 50 [i](CBM's Stomp)[/i], energy 30 -> 45
+[/list]
+
+[hr][/hr]
+
+[h1]MARINES[/h1]
+[h2]Weapons[/h2]
+[list]
+[*][b]The Machine Gun is a sidegrade to the Shotgun[/b] 2 points with no Shotgun needed (was Shotgun + 1 point), and you keep it when you die. You pick one: owning either locks the other
+[*][b]Flamethrower and Grenade Launcher[/b] unlock from the Shotgun or the Machine Gun
+[*][b]Weapon upgrades[/b] Shotgun 7.84% -> 10% per level, Flamethrower and Grenade Launcher 7% -> 10%, the same as every other weapon
+[*][b]Shotgun falloff[/b] starts at 7.5m (was 5m) and ends at 17.5m (was 15m)
+[*][b]Grenade Launcher damage[/b] 70 -> 74.4 [i](vanilla value)[/i]
+[/list]
+Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet to lifeforms and was priced as an upgrade over the Shotgun. Vanilla has since nerfed it to 10.5, so it is priced as the Shotgun's equal here.
+
+[h2]Support[/h2]
+[list]
+[*][b]Improved Resupply[/b] also gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
+[*][b]Welding[/b] gives twice the XP
+[*][b]Destroying an ARC[/b] 150 -> 100 XP for Aliens
+[/list]
+
+[hr][/hr]
+
+[h1]SPAWN PROTECTION[/h1]
+[list]
+[*] Starts at 2.4 seconds (was 3)
+[*] Drops every fifth of the round: 1.8, 1.2, 0.6 and finally 0.1 seconds. On a 25 minute round that is one step every 5 minutes
+[*] Everyone gets a warning 30 seconds before each drop
+[/list]
+The longer a round goes, the easier it gets to finish it.
+
+[hr][/hr]
+
+[h1]Credits[/h1]
+[b]Author:[/b] Bleu
+
+[b]Developed for:[/b] the NS2 Sudamerica community. Join us at [url=https://discord.gg/NS2-Sudamerica]discord.gg/NS2-Sudamerica[/url].
+
+Several changes here are ported or adapted from Blast to the Past, ENSL CompMod and the Community Balance Mod.
+]=]
 image       = "preview.jpg"
-tag_modtype = ""
-tag_support = ""
+tag_modtype = "Gameplay Tweak"
+tag_support = "Must be run on Server"
 publish_id = 3572663596
