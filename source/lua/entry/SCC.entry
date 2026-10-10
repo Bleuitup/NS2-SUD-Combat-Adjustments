@@ -1,4 +1,0 @@
-modEntry = {
-FileHooks = "lua/SCC/FileHooks.lua",
-Priority = 1
-}
