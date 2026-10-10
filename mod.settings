@@ -1,7 +1,7 @@
 name        = "NS2 SUD Combat Adjustments"
 source_dir  = "source"
 output_dir  = "output"
-description = [=[mod id 3572663596
+description = "mod id 3572663596
 
 [h1]NS2 SUD Combat Adjustments (SCA)[/h1]
 [b]Requires:[/b] the NS2 Combat mod, loaded alongside SCA.
@@ -69,8 +69,9 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 
 [h1]SPAWN PROTECTION[/h1]
 [list]
-[*] Starts at 2.4 seconds (was 3)
-[*] Drops every fifth of the round: 1.8, 1.2, 0.6 and finally 0.1 seconds. On a 25 minute round that is one step every 5 minutes
+[*] Stays at Combat's 3 seconds for the first 10 minutes of a 25 minute round
+[*] Then drops by 0.6 seconds at 10, 15, 20 and 25 minutes: 2.4, 1.8, 1.2 and finally 0.6 seconds, which stays for overtime
+[*] A shorter or longer round moves the drops with it: they come at 40%, 60%, 80% and 100% of the round
 [*] Everyone gets a warning 30 seconds before each drop
 [/list]
 The longer a round goes, the easier it gets to finish it.
@@ -83,7 +84,7 @@ The longer a round goes, the easier it gets to finish it.
 [b]Developed for:[/b] the NS2 Sudamerica community. Join us at [url=https://discord.gg/NS2-Sudamerica]discord.gg/NS2-Sudamerica[/url].
 
 Several changes here are ported or adapted from Blast to the Past, ENSL CompMod and the Community Balance Mod.
-]=]
+"
 image       = "preview.jpg"
 tag_modtype = "Gameplay Tweak"
 tag_support = "Must be run on Server"
