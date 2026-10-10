@@ -69,11 +69,8 @@ function Player:CoEnableUpgrade(upgrades)
         -- Hive trait rule, checked against what the player owns right now. That includes the
         -- upgrades accepted earlier in this same purchase.
         local hiveTraitLockMessage
-        if not alreadyGotUpgrade and SCA_GetHiveTraitBlockers then
-            local blockers = SCA_GetHiveTraitBlockers(techId, function(traitTechId)
-                local trait = GetUpgradeFromTechId(traitTechId)
-                return trait ~= nil and self:GetHasCombatUpgrade(trait:GetId())
-            end)
+        if not alreadyGotUpgrade and SCA_GetHiveTraitBlockersForPlayer then
+            local blockers = SCA_GetHiveTraitBlockersForPlayer(self, techId)
             if blockers then
                 hiveTraitLockMessage = SCA_GetHiveTraitLockMessage(upgrade:GetDescription(), blockers)
             end

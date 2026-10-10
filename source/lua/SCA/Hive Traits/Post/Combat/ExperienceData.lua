@@ -82,6 +82,16 @@ function SCA_GetHiveTraitBlockers(techId, hasTrait)
 
 end
 
+-- The same check for a player on the server, going by the upgrades they own.
+function SCA_GetHiveTraitBlockersForPlayer(player, techId)
+
+    return SCA_GetHiveTraitBlockers(techId, function(traitTechId)
+        local trait = GetUpgradeFromTechId(traitTechId)
+        return trait ~= nil and player:GetHasCombatUpgrade(trait:GetId())
+    end)
+
+end
+
 -- Chat message for a refused purchase, e.g.
 -- "Regeneration is locked. Take a Shift trait and a Shade trait first."
 function SCA_GetHiveTraitLockMessage(upgradeDescription, blockers)
