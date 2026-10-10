@@ -1,7 +1,7 @@
 name        = "NS2 SUD Combat Adjustments"
 source_dir  = "source"
 output_dir  = "output"
-description = [=[]=]
+description = ""
 image       = "preview.jpg"
 tag_modtype = ""
 tag_support = ""
