@@ -41,6 +41,7 @@ description = "mod id 3572663596
 
 [h2]Onos[/h2]
 [list]
+[*][b]Charge[/b] comes with the Onos, as in vanilla. It used to need Tier 2, which now gives Bone Shield
 [*][b]Bone Shield[/b] 1000 -> 600 hitpoints
 [*][b]Stomp[/b] no longer knocks Marines down, it webs them instead. Damage 40 -> 50 [i](CBM's Stomp)[/i], energy 30 -> 45
 [/list]

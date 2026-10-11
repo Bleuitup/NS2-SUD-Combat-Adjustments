@@ -50,6 +50,7 @@ local pieces = {
 "Hitpoints",
 "Hive Traits",
 "Kill XP",
+"Onos Charge",
 "Resupply",
 "Spawn Protection",
 "Stomp",
