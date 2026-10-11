@@ -58,6 +58,7 @@ local pieces = {
 "Upgrade Rules",
 "Weapon Tree",
 "Weapons",
+"Welder Self Weld",
 "Welding XP",
 "Xenocide"
 }
