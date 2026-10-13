@@ -4,19 +4,19 @@ if not Server then return end
 -- Spawn protection that wears off late in the round.
 --
 -- The round's time limit is split into five equal parts. For the first two, Combat's own time
--- applies. From then on, the end of every part takes a fifth of that time away, the last drop
--- landing on the time limit itself. Overtime keeps the last step.
+-- applies. The start of each of the last three takes a fifth of that time away. The last step
+-- stays for the rest of the round and for overtime.
 --
--- With Combat's 3 seconds and a 25 minute round: 3 seconds until 10:00, then 2.4 at 10:00,
--- 1.8 at 15:00, 1.2 at 20:00 and 0.6 at 25:00. A different time limit moves the drops with it:
--- they always sit at 40%, 60%, 80% and 100% of the round.
+-- With Combat's 3 seconds and a 25 minute round: 3 seconds until 10:00, then 2.4 (-20%) from
+-- 10:00, 1.8 (-40%) from 15:00 and 1.2 (-60%) from 20:00 on. A different time limit moves the
+-- drops with it: they always sit at 40%, 60% and 80% of the round.
 --
 -- Combat reads kCombatMarineSpawnProtectTime for both teams when a player spawns, so changing
 -- that one value is enough.
 
 local kIntervals = 5       -- equal parts the round is split into
 local kFullIntervals = 2   -- parts that pass before the first drop
-local kDrops = 4
+local kDrops = 3
 local kDropScalar = 0.2    -- share of Combat's own time each drop takes away
 local kWarningTime = 30
 
