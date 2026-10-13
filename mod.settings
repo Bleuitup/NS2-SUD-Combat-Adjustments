@@ -6,7 +6,7 @@ description = "mod id 3572663596
 [h1]NS2 SUD Combat Adjustments (SCA)[/h1]
 [b]Requires:[/b] the NS2 Combat mod, loaded alongside SCA.
 
-[b]TL;DR:[/b] Combat, rebalanced to play closer to the semi-competitive game NS2 Sudamerica runs on its public server. That server runs Blast to the Past on top of the Community Balance Mod, so several changes here come from there, including nu vanilla changes. This list is only what SCA changes on top of Combat.
+[b]TL;DR:[/b] Combat, rebalanced to play closer to the semi-competitive game NS2 Sudamerica runs on its public server. That server runs Blast to the Past on top of nu vanilla, so several changes here come from there. This list is only what SCA changes on top of Combat.
 
 [hr][/hr]
 
@@ -62,6 +62,7 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 [list]
 [*][b]Improved Resupply[/b] also gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
 [*][b]Welding[/b] gives twice the XP, on teammates and on structures
+[*][b]ARC health[/b] 1000 -> 2100 [i](B2TP value)[/i]
 [*][b]Destroying an ARC[/b] 150 -> 100 XP for Aliens
 [/list]
 
