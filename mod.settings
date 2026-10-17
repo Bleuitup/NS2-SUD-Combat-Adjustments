@@ -62,7 +62,7 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 [list]
 [*][b]Improved Resupply[/b] also gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
 [*][b]Welding[/b] gives twice the XP, on teammates and on structures
-[*][b]ARC[/b] health 1000 -> 2100, armor 200 -> 500 [i](B2TP values)[/i]
+[*][b]ARC[/b] health 1000 -> 1500, armor 200 -> 500
 [*][b]Destroying an ARC[/b] 150 -> 100 XP for Aliens
 [*][b]ARC routes[/b] each ARC takes a random route through the map's rooms to the hive, never the same one as the ARC before it, so Aliens can't just wait in one corridor. It still deploys on the hive as before
 [/list]
