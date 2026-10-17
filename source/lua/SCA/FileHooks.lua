@@ -44,6 +44,7 @@ end
 local pieces = {
 
 "Advanced Swipe",
+"ARC Routes",
 "Alien Abilities",
 "Aura",
 "Focus",

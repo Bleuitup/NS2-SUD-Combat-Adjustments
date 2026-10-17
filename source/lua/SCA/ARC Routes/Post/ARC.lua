@@ -1,0 +1,292 @@
+-- ARC routes
+--
+-- Combat sends every ARC down the shortest path to the alien hive, so they all walk the same
+-- corridors. Here each ARC walks a randomly chosen series of rooms instead, never the same series
+-- as the ARC before it. Once it enters the hive's room, Combat's own behavior takes over again:
+-- head for the hive and deploy in range. Combat's "deploy as soon as a hive is in range" check
+-- keeps working the whole way.
+--
+-- The rooms and the doorways between them come from the room map the game builds for its bots
+-- (lua/bots/LocationGraph.lua). It is built on every server when the map loads.
+--
+-- A route never enters the same room twice. It may move away from the hive for a while, but it
+-- never doubles back.
+--
+-- Each ARC logs its route to the server console, e.g.
+--   [SCA] ARC route: Marine Start > Atrium > Cargo > Hive
+
+if not Server then return end
+
+local kMaxRoutes = 50             -- stop listing routes after this many
+local kMaxSearchSteps = 20000     -- and never spend more than this many steps listing them
+local kWaypointReachedDistance = 3
+local kStuckTime = 20             -- seconds without getting closer to a doorway before skipping it
+local kStuckProgress = 0.5        -- meters closer that count as progress
+local kMaxSkips = 2               -- skipped doorways before the route is dropped
+local kRoomCheckInterval = 0.5    -- seconds between checks of which room the ARC is in
+
+local routesCache = {}            -- "<start room>|<hive room>" -> list of routes (lists of room names)
+local previousRouteKey            -- route the previous ARC took
+
+local function Log(message)
+    Shared.Message("[SCA] " .. message)
+end
+
+local function GetRoomName(position)
+    local location = GetLocationForPoint(position)
+    local name = location and location:GetName()
+    if name and name ~= "" then
+        return name
+    end
+    return nil
+end
+
+-- Same target Combat uses: the first alien command structure that is still alive.
+local function GetTargetHive(arc)
+    for _, hive in ipairs(GetEntitiesForTeam("CommandStructure", GetEnemyTeamNumber(arc:GetTeamNumber()))) do
+        if hive:GetIsAlive() then
+            return hive
+        end
+    end
+    return nil
+end
+
+-- Every series of rooms from startRoom to hiveRoom that never enters a room twice.
+-- getNeighbors(roomName) returns the rooms directly connected to it.
+function SCA_ListArcRoutes(startRoom, hiveRoom, getNeighbors)
+
+    local routes = {}
+    local steps = 0
+    local route = { startRoom }
+    local visited = { [startRoom] = true }
+
+    local function Visit(room)
+
+        if #routes >= kMaxRoutes or steps >= kMaxSearchSteps then
+            return
+        end
+        steps = steps + 1
+
+        if room == hiveRoom then
+            local copy = {}
+            for i = 1, #route do
+                copy[i] = route[i]
+            end
+            table.insert(routes, copy)
+            return
+        end
+
+        for _, nextRoom in ipairs(getNeighbors(room)) do
+            if not visited[nextRoom] then
+                visited[nextRoom] = true
+                table.insert(route, nextRoom)
+                Visit(nextRoom)
+                table.remove(route)
+                visited[nextRoom] = nil
+            end
+        end
+
+    end
+
+    Visit(startRoom)
+
+    return routes
+
+end
+
+-- Random among the routes, never the one previousKey names, unless it is the only route.
+function SCA_PickArcRoute(routes, previousKey, random)
+
+    local candidates = {}
+    for _, route in ipairs(routes) do
+        if table.concat(route, " > ") ~= previousKey then
+            table.insert(candidates, route)
+        end
+    end
+
+    if #candidates == 0 then
+        candidates = routes
+    end
+
+    if #candidates == 0 then
+        return nil
+    end
+
+    return candidates[random(#candidates)]
+
+end
+
+local function GetNeighborsFunction(graph)
+    return function(roomName)
+        local list = {}
+        local connected = graph:GetDirectPathsForLocationName(roomName)
+        if connected then
+            for i = 1, #connected do
+                table.insert(list, connected[i])
+            end
+        end
+        return list
+    end
+end
+
+-- The doorway between two connected rooms, or the middle of the next room if the room map has
+-- no doorway for them.
+local function GetDoorway(graph, fromRoom, toRoom)
+    local gateways = graph.locationGateways[fromRoom]
+    local doorway = gateways and gateways[toRoom]
+    return doorway or graph:GetExplorePointForLocationName(toRoom)
+end
+
+local function PlanRoute(arc)
+
+    local graph = GetLocationGraph and GetLocationGraph()
+    local hive = GetTargetHive(arc)
+    if not graph or not hive then
+        return nil, "no room map or no hive"
+    end
+
+    local startRoom = GetRoomName(arc:GetOrigin())
+    local hiveRoom = GetRoomName(hive:GetOrigin())
+    if not startRoom or not hiveRoom then
+        return nil, "spawn room or hive room has no name"
+    end
+    if startRoom == hiveRoom then
+        return nil, "already in the hive room"
+    end
+
+    local cacheKey = startRoom .. "|" .. hiveRoom
+    local routes = routesCache[cacheKey]
+    if not routes then
+        routes = SCA_ListArcRoutes(startRoom, hiveRoom, GetNeighborsFunction(graph))
+        routesCache[cacheKey] = routes
+    end
+
+    local rooms = SCA_PickArcRoute(routes, previousRouteKey, math.random)
+    if not rooms then
+        return nil, "no route between " .. startRoom .. " and " .. hiveRoom
+    end
+
+    local routeKey = table.concat(rooms, " > ")
+    previousRouteKey = routeKey
+
+    local waypoints = {}
+    for i = 2, #rooms do
+        local doorway = GetDoorway(graph, rooms[i - 1], rooms[i])
+        if not doorway then
+            return nil, "no doorway into " .. rooms[i]
+        end
+        table.insert(waypoints, { room = rooms[i], position = doorway })
+    end
+
+    return { rooms = rooms, waypoints = waypoints, index = 1, skips = 0, key = routeKey, of = #routes }
+
+end
+
+local function AbandonRoute(arc, reason)
+    Log("ARC route dropped (" .. reason .. "), heading straight for the hive")
+    arc.scaRoute = false
+end
+
+-- Moves the route on to the next doorway once the ARC is at the current one, or already inside
+-- the room it leads to (or one further along).
+local function AdvanceRoute(arc, route)
+
+    local now = Shared.GetTime()
+
+    if not route.nextRoomCheck or now >= route.nextRoomCheck then
+
+        route.nextRoomCheck = now + kRoomCheckInterval
+        local currentRoom = GetRoomName(arc:GetOrigin())
+
+        for i = #route.waypoints, route.index, -1 do
+            if route.waypoints[i].room == currentRoom then
+                route.index = i + 1
+                route.bestDistance = nil
+                return
+            end
+        end
+
+    end
+
+    local waypoint = route.waypoints[route.index]
+    local distance = (waypoint.position - arc:GetOrigin()):GetLength()
+
+    if distance < kWaypointReachedDistance then
+        route.index = route.index + 1
+        route.bestDistance = nil
+        return
+    end
+
+    -- Stuck check
+    if not route.bestDistance or distance < route.bestDistance - kStuckProgress then
+        route.bestDistance = distance
+        route.timeBest = now
+    elseif now - route.timeBest > kStuckTime then
+        route.skips = route.skips + 1
+        route.index = route.index + 1
+        route.bestDistance = nil
+        if route.skips >= kMaxSkips then
+            AbandonRoute(arc, "stuck")
+        end
+    end
+
+end
+
+local function UpdateRoute(arc)
+
+    if arc.deployMode ~= ARC.kDeployMode.Undeployed then
+        return
+    end
+
+    local currentOrder = arc:GetCurrentOrder()
+    if currentOrder and currentOrder:GetType() ~= kTechId.Move then
+        return -- deploying, or anything else that is not walking
+    end
+
+    if arc.scaRoute == nil then
+
+        local route, reason = PlanRoute(arc)
+        if route then
+            arc.scaRoute = route
+            Log(string.format("ARC route: %s (one of %d routes)", route.key, route.of))
+        else
+            arc.scaRoute = false
+            Log("ARC route: none (" .. reason .. "), heading straight for the hive")
+        end
+
+    end
+
+    local route = arc.scaRoute
+    if not route then
+        return
+    end
+
+    AdvanceRoute(arc, route)
+
+    if not arc.scaRoute then
+        return
+    end
+
+    if route.index > #route.waypoints then
+        arc.scaRoute = false -- in the hive's room: Combat takes it from here
+        return
+    end
+
+    local waypoint = route.waypoints[route.index].position
+    local onWaypoint = currentOrder and (currentOrder:GetLocation() - waypoint):GetLength() < 0.1
+    if not onWaypoint then
+        arc:GiveOrder(kTechId.Move, Entity.invalidId, waypoint, nil, true, true)
+    end
+
+end
+
+-- Runs before Combat's update, so Combat sees an ARC that is already walking and leaves its order
+-- alone.
+local oldOnUpdate = ARC.OnUpdate
+function ARC:OnUpdate(deltaTime)
+
+    UpdateRoute(self)
+
+    oldOnUpdate(self, deltaTime)
+
+end
