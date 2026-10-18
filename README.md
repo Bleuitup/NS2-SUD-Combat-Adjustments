@@ -22,7 +22,7 @@ Each ARC writes one line to the server console with the route it takes, for exam
 
 **Traits**
 - **No more stacking one hive type.** You can't take a second Crag, Shift or Shade trait until you have one of each, and no third until you have two of each. Stacking Carapace, Regeneration and Vampirism made aliens far too hard to kill. Locked traits show in red in the evolve menu, and hovering one tells you what to take first.
-- **Carapace** now emphasizes biomass synergy. As in vanilla, it gives a base amount of armor plus more for every biomass level, and your biomass here is 1 at the start, 5 with Tier 2 and 9 with Tier 3. Skulk +6 / +10 / +14 armor, Onos +70 / +150 / +230. Combat gave the biomass 12 amount from the first point (Skulk +17, Onos +290).
+- **Carapace** now emphasizes biomass synergy. As in vanilla, it gives a base amount of armor plus more for every biomass level, and your biomass here is 1 at the start, 5 with Tier 2 and 9 with Tier 3 (+4 per Tier). Skulk +6 / +10 / +14 armor, Onos +70 / +150 / +230. Combat gave the biomass 12 amount from the first point (Skulk +17, Onos +290).
 - **Tier health:** each Tier upgrade (Tier 2 and Tier 3 abilities) gives the health of 4 biomass levels: Skulk +12, Gorge +8, Lerk +8, Fade +20, Onos +200 per Tier. In Combat, Tier 3 was worth 5 levels.
 - **Focus:** 2 points -> 1, and its bonus is vanilla's +33% (Combat had +34%).
 - **Aura** only shows an enemy's health while that enemy is parasited *(originally from CompMod)*.
