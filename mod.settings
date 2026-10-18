@@ -1,7 +1,7 @@
 name        = "NS2 SUD Combat Adjustments"
 source_dir  = "source"
 output_dir  = "output"
-description = [=[mod id 3572663596
+description = "mod id 3572663596
 
 [h1]NS2 SUD Combat Adjustments (SCA)[/h1]
 [b]Requires:[/b] the NS2 Combat mod, loaded alongside SCA.
@@ -88,7 +88,7 @@ The longer a round goes, the easier it gets to finish it.
 [b]Developed for:[/b] the NS2 Sudamerica community. Join us at [url=https://discord.gg/NS2-Sudamerica]discord.gg/NS2-Sudamerica[/url].
 
 Several changes here are ported or adapted from Blast to the Past, ENSL CompMod and the Community Balance Mod.
-]=]
+"
 image       = "preview.jpg"
 tag_modtype = "Gameplay Tweak"
 tag_support = "Must be run on Server"
