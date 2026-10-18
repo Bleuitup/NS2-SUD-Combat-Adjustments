@@ -71,6 +71,7 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 
 [h1]EXPERIENCE[/h1]
 [list]
+[*][b]Assists[/b] anyone who dealt more than 10% of an enemy's health and armor since it was last at full health now shares the kill XP, even if far away or already dead. Before, only the killer and teammates close to the kill shared it
 [*][b]Catch-up[/b] every 5 minutes, anyone below 61% of the average XP is raised to it, as Combat intended. Combat's own check almost never fired
 [/list]
 

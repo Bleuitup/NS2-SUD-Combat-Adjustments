@@ -46,6 +46,7 @@ local pieces = {
 "Advanced Swipe",
 "ARC Routes",
 "ARC Spawns",
+"Assist XP",
 "Alien Abilities",
 "Aura",
 "Build Text",
