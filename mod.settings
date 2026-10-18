@@ -63,8 +63,15 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 [*][b]Improved Resupply[/b] also gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
 [*][b]Welding[/b] gives twice the XP, on teammates and on structures
 [*][b]ARC[/b] health 1000 -> 1500, armor 200 -> 500
-[*][b]Destroying an ARC[/b] 150 -> 100 XP for Aliens
-[*][b]ARC routes[/b] each ARC takes a random route through the map's rooms to the hive, never the same one as the ARC before it, so Aliens can't just wait in one corridor. It still deploys on the hive as before
+[*][b]ARC routes[/b] each ARC heads for the hive from a different side in turn, by a random route through the map's rooms, so Aliens can't just wait in one corridor. It still deploys on the hive as before
+[*][b]ARC spawns[/b] no longer skipped. Combat sometimes lost an ARC when its spawn spot had no path to the hive, and the next one came a full interval late
+[/list]
+
+[hr][/hr]
+
+[h1]EXPERIENCE[/h1]
+[list]
+[*][b]Catch-up[/b] every 5 minutes, anyone below 61% of the average XP is raised to it, as Combat intended. Combat's own check almost never fired
 [/list]
 
 [hr][/hr]

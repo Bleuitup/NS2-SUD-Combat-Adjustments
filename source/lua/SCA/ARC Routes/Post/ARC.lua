@@ -1,8 +1,16 @@
 -- ARC routes
 --
 -- Combat sends every ARC down the shortest path to the alien hive, so they all walk the same
--- corridors. Here each ARC walks a randomly chosen series of rooms instead, never the same series
--- as the ARC before it. Once it enters the hive's room, Combat's own behavior takes over again:
+-- corridors. Here each ARC walks a randomly chosen series of rooms instead.
+--
+-- The route is chosen from the hive end. The rooms next to the hive's room are its approaches.
+-- ARCs take them in turn, in a shuffled cycle: with approaches A, B and C, the first ARC comes
+-- through one of them at random, the second through one of the other two, the third through the
+-- last, and then a new shuffled cycle starts, never with the approach that ended the previous one.
+-- The way from the spawn to that approach is random too, and not the same series of rooms as the
+-- previous ARC's where there is a choice.
+--
+-- Once it enters the hive's room, Combat's own behavior takes over again:
 -- head for the hive and deploy in range. Combat's "deploy as soon as a hive is in range" check
 -- keeps working the whole way.
 --
@@ -13,7 +21,7 @@
 -- never doubles back.
 --
 -- Each ARC logs its route to the server console, e.g.
---   [SCA] ARC route: Marine Start > Atrium > Cargo > Hive
+--   [SCA] ARC route: Marine Start > Atrium > Cargo > Hive (from Cargo, one of 2 approaches; one of 3 routes that way)
 
 if not Server then return end
 
@@ -27,6 +35,7 @@ local kRoomCheckInterval = 0.5    -- seconds between checks of which room the AR
 
 local routesCache = {}            -- "<start room>|<hive room>" -> list of routes (lists of room names)
 local previousRouteKey            -- route the previous ARC took
+local approachCycles = {}         -- "<start room>|<hive room>" -> { remaining = { rooms }, last = room }
 
 local function Log(message)
     Shared.Message("[SCA] " .. message)
@@ -116,6 +125,61 @@ function SCA_PickArcRoute(routes, previousKey, random)
 
 end
 
+-- The room a route enters the hive's room from.
+local function GetApproach(route)
+    return route[#route - 1]
+end
+
+-- Picks the approach for the next ARC from a shuffled cycle of the approaches that have routes.
+-- cycle keeps the state between ARCs: { remaining = {...}, last = room }.
+function SCA_PickArcApproach(approaches, cycle, random)
+
+    if #approaches == 0 then
+        return nil
+    end
+
+    local function IsAvailable(room)
+        for _, approach in ipairs(approaches) do
+            if approach == room then
+                return true
+            end
+        end
+        return false
+    end
+
+    -- Drop approaches that no longer have routes (the hive moved, a route went away).
+    local remaining = {}
+    for _, room in ipairs(cycle.remaining or {}) do
+        if IsAvailable(room) then
+            table.insert(remaining, room)
+        end
+    end
+
+    if #remaining == 0 then
+
+        -- New cycle: shuffle all approaches, never starting with the one that ended the last cycle.
+        for _, room in ipairs(approaches) do
+            table.insert(remaining, room)
+        end
+        for i = #remaining, 2, -1 do
+            local j = random(i)
+            remaining[i], remaining[j] = remaining[j], remaining[i]
+        end
+        if #remaining > 1 and remaining[1] == cycle.last then
+            local j = random(#remaining - 1) + 1
+            remaining[1], remaining[j] = remaining[j], remaining[1]
+        end
+
+    end
+
+    local approach = table.remove(remaining, 1)
+    cycle.remaining = remaining
+    cycle.last = approach
+
+    return approach
+
+end
+
 local function GetNeighborsFunction(graph)
     return function(roomName)
         local list = {}
@@ -161,10 +225,26 @@ local function PlanRoute(arc)
         routesCache[cacheKey] = routes
     end
 
-    local rooms = SCA_PickArcRoute(routes, previousRouteKey, math.random)
-    if not rooms then
+    -- Group the routes by the room they enter the hive's room from.
+    local routesByApproach = {}
+    local approaches = {}
+    for _, route in ipairs(routes) do
+        local approach = GetApproach(route)
+        if not routesByApproach[approach] then
+            routesByApproach[approach] = {}
+            table.insert(approaches, approach)
+        end
+        table.insert(routesByApproach[approach], route)
+    end
+
+    approachCycles[cacheKey] = approachCycles[cacheKey] or {}
+    local approach = SCA_PickArcApproach(approaches, approachCycles[cacheKey], math.random)
+    if not approach then
         return nil, "no route between " .. startRoom .. " and " .. hiveRoom
     end
+
+    local approachRoutes = routesByApproach[approach]
+    local rooms = SCA_PickArcRoute(approachRoutes, previousRouteKey, math.random)
 
     local routeKey = table.concat(rooms, " > ")
     previousRouteKey = routeKey
@@ -178,7 +258,8 @@ local function PlanRoute(arc)
         table.insert(waypoints, { room = rooms[i], position = doorway })
     end
 
-    return { rooms = rooms, waypoints = waypoints, index = 1, skips = 0, key = routeKey, of = #routes }
+    return { rooms = rooms, waypoints = waypoints, index = 1, skips = 0, key = routeKey,
+             approach = approach, approaches = #approaches, approachRoutes = #approachRoutes }
 
 end
 
@@ -248,7 +329,11 @@ local function UpdateRoute(arc)
         local route, reason = PlanRoute(arc)
         if route then
             arc.scaRoute = route
-            Log(string.format("ARC route: %s (one of %d routes)", route.key, route.of))
+            local approachesText = route.approaches == 1 and "the only approach"
+                or string.format("one of %d approaches", route.approaches)
+            local routesText = route.approachRoutes == 1 and "the only route that way"
+                or string.format("one of %d routes that way", route.approachRoutes)
+            Log(string.format("ARC route: %s (from %s, %s; %s)", route.key, route.approach, approachesText, routesText))
         else
             arc.scaRoute = false
             Log("ARC route: none (" .. reason .. "), heading straight for the hive")

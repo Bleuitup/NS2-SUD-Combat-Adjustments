@@ -45,12 +45,13 @@ local pieces = {
 
 "Advanced Swipe",
 "ARC Routes",
+"ARC Spawns",
 "Alien Abilities",
 "Aura",
+"Build Text",
 "Focus",
 "Hitpoints",
 "Hive Traits",
-"Kill XP",
 "Onos Charge",
 "Resupply",
 "Spawn Protection",
@@ -61,7 +62,8 @@ local pieces = {
 "Weapons",
 "Welder Self Weld",
 "Welding XP",
-"Xenocide"
+"Xenocide",
+"XP Catch Up"
 }
 
 for i = 1, #pieces do

@@ -13,7 +13,7 @@ SCA runs on the server, together with the NS2 Combat mod. Add both to the server
 Each ARC writes one line to the server console with the route it takes, for example:
 
 ```
-[SCA] ARC route: Marine Start > Central > Cart Tunnel > Alien Start (one of 2 routes)
+[SCA] ARC route: Marine Start > Central > Cart Tunnel > Alien Start (from Cart Tunnel, one of 2 approaches; the only route that way)
 ```
 
 ## Changes
@@ -59,8 +59,11 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 - **Improved Resupply** also gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
 - **Welding** gives twice the XP, on teammates and on structures
 - **ARC:** health 1000 -> 1500, armor 200 -> 500
-- **Destroying an ARC:** 150 -> 100 XP for Aliens
-- **ARC routes:** each ARC takes a random route through the map's rooms to the hive, never the same one as the ARC before it, so Aliens can't just wait in one corridor. It still deploys on the hive as before
+- **ARC routes:** each ARC heads for the hive from a different side in turn, by a random route through the map's rooms, so Aliens can't just wait in one corridor. It still deploys on the hive as before
+- **ARC spawns:** no longer skipped. Combat sometimes lost an ARC when its spawn spot had no path to the hive, and the next one came a full interval late
+
+### Experience
+- **Catch-up:** every 5 minutes, anyone below 61% of the average XP is raised to it, as Combat intended. Combat's own check almost never fired
 
 ### Spawn protection
 - Stays at Combat's 3 seconds for the first 10 minutes of a 25 minute round
