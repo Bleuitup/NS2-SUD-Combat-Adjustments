@@ -25,7 +25,9 @@ Each ARC writes one line to the server console with the route it takes, for exam
 - **Carapace** now emphasizes biomass synergy. As in vanilla, it gives a base amount of armor plus more for every biomass level, and your biomass here is 1 at the start, 5 with Tier 2 and 9 with Tier 3 (+4 per Tier). Skulk +6 / +10 / +14 armor, Onos +70 / +150 / +230. Combat gave the biomass 12 amount from the first point (Skulk +17, Onos +290).
 - **Tier health:** each Tier upgrade (Tier 2 and Tier 3 abilities) gives the health of 4 biomass levels: Skulk +12, Gorge +8, Lerk +8, Fade +20, Onos +200 per Tier. In Combat, Tier 3 was worth 5 levels.
 - **Focus:** 2 points -> 1, and its bonus is vanilla's +33% (Combat had +34%).
-- **Aura** only shows an enemy's health while that enemy is parasited *(originally from CompMod)*.
+- **Aura** only shows an enemy's health while that enemy is parasited *(originally from CompMod, now in nuvanilla post b344)*.
+
+Why Focus changed: focus being 2 points is a vestige from the time focus boosted damage by +50%, resulting in 112.5 damage swipes / bites, meaning a clean 1hk on an unarmored marine. UWE nerfed it, and rightfully so, so that it would do slightly less than 100 damage per hit. The current focus mirrors vanilla one.
 
 **Skulk**
 - **Leap energy:** 45 -> 55 *(CompMod value)*
