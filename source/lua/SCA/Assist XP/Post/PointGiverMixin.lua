@@ -11,15 +11,22 @@ if not Server then return end
 -- an equal share of the other 90%, plus their own level bonus.
 --
 -- Only damage since the victim was last at full health and armor counts (see Player_Server.lua
--- in this piece). The scoreboard's assist count is vanilla's and is not changed.
+-- and NS2Gamerules.lua in this piece, for players and for everything else). The scoreboard's
+-- assist count is vanilla's and is not changed.
 
 local kAssistDamageFraction = 0.1
+
+-- Ids of the non-players holding a record, checked for a full heal in NS2Gamerules.lua.
+SCA_AssistRecordHolders = {}
 
 -- SCA's own damage record, kept next to vanilla's (self.damagePoints) so it can be cleared on a
 -- full heal without touching the scoreboard's assists.
 local function GetRecord(self)
     if not self.scaAssistDamage then
         self.scaAssistDamage = { attackers = {} }
+        if not self:isa("Player") then
+            SCA_AssistRecordHolders[self:GetId()] = true
+        end
     end
     return self.scaAssistDamage
 end
