@@ -40,7 +40,8 @@ local function SetupFilehookFolders(modPath)
 end
 
 -- Remove a line to switch that piece off. "Weapon Tree" and the server side of "Hive Traits"
--- need "Upgrade Rules".
+-- need "Upgrade Rules". "XP Messages" wraps what "Assist XP" and "Welding XP" set up, so it stays
+-- after them (post hooks on one file run in this order).
 local pieces = {
 
 "Advanced Swipe",
@@ -65,7 +66,8 @@ local pieces = {
 "Welder Self Weld",
 "Welding XP",
 "Xenocide",
-"XP Catch Up"
+"XP Catch Up",
+"XP Messages"
 }
 
 for i = 1, #pieces do
