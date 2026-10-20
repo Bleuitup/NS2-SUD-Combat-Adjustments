@@ -50,6 +50,7 @@ local pieces = {
 "Alien Abilities",
 "Aura",
 "Build Text",
+"Changelog",
 "Focus",
 "Hitpoints",
 "Hive Traits",

@@ -1,0 +1,384 @@
+-- The SCA in-game changelog popup, taken from Blast to the Past's changelog window.
+--
+-- Built on vanilla's menu2 GUI framework: GUIMenuTabbedBox for the frame, GUIMenuScrollPane for
+-- scrolling, GUIParagraph for the text. Nothing here depends on any other mod.
+--
+-- A plain, always-available reference window: no "seen this version" tracking, no attention
+-- animation on the button. Open it whenever you want to check what the mod changes.
+--
+-- The changelog is available in English, Portuguese and Spanish, picked with the flag buttons in
+-- the top right. Those buttons are children of the window itself rather than of the scroll pane,
+-- so they stay put in the header band and can never be scrolled out of view.
+
+Script.Load("lua/GUI/GUIObject.lua")
+Script.Load("lua/menu2/GUIMenuTabbedBox.lua")
+Script.Load("lua/menu2/widgets/GUIMenuTabButtonWidget.lua")
+Script.Load("lua/menu2/widgets/GUIMenuScrollPane.lua")
+Script.Load("lua/GUI/GUIText.lua")
+Script.Load("lua/GUI/GUIParagraph.lua")
+Script.Load("lua/GUI/widgets/GUIButton.lua")
+Script.Load("lua/GUI/layouts/GUIListLayout.lua")
+Script.Load("lua/menu2/MenuStyles.lua")
+
+Script.Load("lua/SCA/Changelog/Shared/ChangelogData.lua")
+
+-- Splits a leading run of '#' characters off a changelog line and returns the heading level
+-- (0 for a plain line) plus the remaining text. Deliberately only LEADING '#'s count, matching
+-- ordinary Markdown heading syntax -- CBM's original implementation instead used
+-- string.gsub(rawLine, "#", "") to count every '#' anywhere in the line, which misreads any line
+-- that happens to mention something like "Medtech #1" as a level-1 heading (the biggest style),
+-- since that line contains exactly one '#'. This version does not have that failure mode.
+local function SplitHeadingLevel(rawLine)
+    local hashes = string.match(rawLine, "^#*")
+    local level = string.len(hashes)
+    local rest = string.sub(rawLine, level + 1)
+    return rest, level
+end
+
+local kInnerBackgroundSideSpacing = 32
+local kInnerBackgroundTopSpacing = 212
+local kInnerBackgroundBottomSpacing = 18
+local kUnderlapYSize = 113
+
+local kTabHeight = 94
+local kTabMinWidth = 150
+local kTabButtonFont = {family = "MicrogrammaBold", size = 48}
+
+local kTitleFont = {family = "AgencyBold", size = 60}
+
+local baseClass = GUIMenuTabbedBox
+class "GUISCAChangelogWindow" (baseClass)
+
+GUISCAChangelogWindow:AddClassProperty("IsOpen", false)
+
+-- Size and vertical offset are CBM's own values (GUIBetaBalanceChangelog.lua), and are in the
+-- 3840x2160 mockup coordinate space the whole menu is authored against -- NOT real screen pixels.
+--
+-- This window does NOT scale itself. GUISCAChangelogButton reparents it onto the nav bar (see
+-- the layering note there), and it inherits the nav bar's resolution scale from that parent, the
+-- same way CBM's changelog does. An earlier version computed and applied its own scale, which was
+-- correct back when the window was parented to nil -- but once reparented that scale multiplies
+-- with the inherited one and the window renders roughly a third of its intended size.
+local kWindowSize = Vector(2300, 1600, 0)
+local kYOffset = 900
+
+-- Language buttons. All values are in the same 3840x2160 mockup space as kWindowSize above.
+--
+-- The band between the top of the window and the top of the inner content box is
+-- kInnerBackgroundTopSpacing - kUnderlapYSize = 99 tall, and the title sits centered in it. These
+-- flags are anchored to the top RIGHT of the window and sized to sit inside that band, so they
+-- share the header strip with the title without overlapping it or the content box below.
+local kFlagSize = Vector(132, 66, 0)
+local kFlagSpacing = 16
+local kFlagBarRightMargin = 48
+local kFlagBarY = 17
+
+-- Placeholder artwork, generated to match the format of the mod's existing changelog icon
+-- (uncompressed 32-bit BGRA with a full mip chain). Swap in real flags by replacing these files.
+local kLanguageButtons =
+{
+    { language = "en", texture = PrecacheAsset("ui/sca_flag_en.dds") },
+    { language = "pt", texture = PrecacheAsset("ui/sca_flag_pt.dds") },
+    { language = "es", texture = PrecacheAsset("ui/sca_flag_es.dds") },
+}
+
+local kFlagColorSelected = Color(1, 1, 1, 1)
+local kFlagColorHover = Color(0.8, 0.8, 0.8, 1)
+local kFlagColorIdle = Color(0.42, 0.42, 0.42, 1)
+
+function GUISCAChangelogWindow:Initialize(params, errorDepth)
+    errorDepth = (errorDepth or 1) + 1
+
+    baseClass.Initialize(self, params, errorDepth)
+
+    self.contentObs = {}
+
+    self:AlignCenter()
+    self:SetLayer(999)
+
+    self.title = CreateGUIObject("title", GUIText, self)
+    self.title:SetFont(kTitleFont)
+    self.title:SetColor(Color(1, 1, 1, 1))
+    self.title:SetText("SCA CHANGELOG")
+    self.title:AlignTop()
+    self.title:SetY(-23)
+
+    self:InitializeContentHolders()
+    self:InitializeLanguageBar()
+
+    self.tabButton = CreateGUIObject("tabButton", GUIMenuTabButtonWidget, self)
+    self.tabButton:SetTabHeight(kTabHeight)
+    self.tabButton:SetTabMinWidth(kTabMinWidth)
+    self.tabButton:AlignBottom()
+    self.tabButton:SetFont(kTabButtonFont)
+    self.tabButton:SetLabel("CLOSE")
+    self:HookEvent(self.tabButton, "OnPressed", self.Close)
+    self:HookEvent(self.tabButton, "OnTabSizeChanged", self.SetTabSize)
+    self:SetTabSize(self.tabButton:GetTabSize())
+
+    self:SetSize(kWindowSize.x, kWindowSize.y)
+    self:SetY(kYOffset)
+    self:Close()
+
+    -- Follow the game's own language setting, falling back to English for every locale we don't
+    -- have a translation for. Set directly rather than through SetChangelogLanguage, since there
+    -- is no previous text to tear down and nothing to scroll back to yet.
+    self.language = GetSCADefaultChangelogLanguage()
+    self:LoadChangelog(GetSCAChangelogText(self.language))
+    self:UpdateLanguageButtons()
+
+end
+
+function GUISCAChangelogWindow:InitializeLanguageBar()
+
+    self.languageButtons = {}
+
+    self.languageBar = CreateGUIObject("languageBar", GUIListLayout, self,
+    {
+        orientation = "horizontal",
+        spacing = kFlagSpacing,
+    })
+    self.languageBar:AlignTopRight()
+    self.languageBar:SetPosition(-kFlagBarRightMargin, kFlagBarY)
+
+    for i = 1, #kLanguageButtons do
+
+        local entry = kLanguageButtons[i]
+
+        local button = CreateGUIObject("languageButton_" .. entry.language, GUIButton, self.languageBar)
+        button:SetTexture(entry.texture)
+        button:SetSize(kFlagSize)
+        button:SetColor(kFlagColorIdle)
+        button.scaLanguage = entry.language
+
+        -- Closures rather than a shared method: the event only passes the receiver, not the
+        -- sender, so there would otherwise be no way to tell the three buttons apart.
+        self:HookEvent(button, "OnPressed", function()
+            self:SetChangelogLanguage(entry.language)
+        end)
+
+        self:HookEvent(button, "OnMouseOverChanged", function()
+            self:UpdateLanguageButtons()
+        end)
+
+        table.insert(self.languageButtons, button)
+
+    end
+
+end
+
+-- Selected flag is drawn at full brightness, the others dimmed, brightening on mouse-over. Uses
+-- color rather than a second texture per flag so the placeholder art stays a single file each.
+function GUISCAChangelogWindow:UpdateLanguageButtons()
+
+    if not self.languageButtons then return end
+
+    for i = 1, #self.languageButtons do
+
+        local button = self.languageButtons[i]
+
+        if button.scaLanguage == self.language then
+            button:SetColor(kFlagColorSelected)
+        elseif button:GetMouseOver() then
+            button:SetColor(kFlagColorHover)
+        else
+            button:SetColor(kFlagColorIdle)
+        end
+
+    end
+
+end
+
+function GUISCAChangelogWindow:SetChangelogLanguage(language)
+
+    if language == self.language then return end
+
+    self.language = language
+    self:LoadChangelog(GetSCAChangelogText(language))
+    self:UpdateLanguageButtons()
+
+    -- The languages are different lengths, so whatever the reader was scrolled to means nothing
+    -- in the new text. Send them back to the top rather than somewhere arbitrary.
+    self.scrollPane:ScrollToLocation(0, 0)
+
+end
+
+function GUISCAChangelogWindow:InitializeContentHolders()
+
+    self.innerBack = CreateGUIObject("innerBack", GUIMenuBasicBox, self)
+    self.innerBack:SetPosition(kInnerBackgroundSideSpacing, kInnerBackgroundTopSpacing - kUnderlapYSize)
+    self:HookEvent(self, "OnSizeChanged", self.UpdateInnerBackgroundSize)
+
+    self.scrollPane = CreateGUIObject("scrollPane", GUIMenuScrollPane, self.innerBack)
+
+    self.listLayout = CreateGUIObject("listLayout", GUIListLayout, self.scrollPane,
+    {
+        orientation = "vertical",
+        spacing = 0,
+    })
+
+    self.scrollPane:HookEvent(self.listLayout, "OnSizeChanged", self.scrollPane.SetPaneSize)
+
+end
+
+-- Falls back to level 0 (body text) for anything outside the levels ChangelogData.lua actually
+-- uses, so a typo with an extra '#' degrades gracefully instead of erroring on a nil font.
+local kStyleToFontsMap =
+{
+    [1] = {family = "AgencyBold", size = 68},
+    [2] = {family = "AgencyBold", size = 56},
+    [3] = {family = "Agency", size = 50},
+    [0] = {family = "Arial", size = 28},
+}
+
+local kStyleToColorMap =
+{
+    [1] = MenuStyle.kHighlight,
+    [2] = MenuStyle.kOptionHeadingColor,
+    [3] = MenuStyle.kOptionHeadingColor,
+    [0] = Color(1, 1, 1, 1),
+}
+
+local function GetStyleFont(style)
+    return kStyleToFontsMap[style] or kStyleToFontsMap[0]
+end
+
+local function GetStyleColor(style)
+    return kStyleToColorMap[style] or kStyleToColorMap[0]
+end
+
+-- GUIMenuScrollBarWidget.kScrollBarThickness is 32. The scroll pane's own width includes the
+-- room the scrollbar sits in, but paragraphSize below wasn't accounting for it, so the wrap
+-- width matched the FULL pane width and long lines ran their last few characters in behind the
+-- scrollbar track -- visible in testing as a line splitting mid-word ("grenad|launcher.") with
+-- no hyphen, rather than wrapping the whole word. This margin keeps the wrap width inside the
+-- part of the pane that's actually clear of the scrollbar.
+local kScrollBarClearance = 32 + 12
+
+local function AddLineGroup(self, lineGroup, style, lineNumber)
+
+    local lineGroupObj = CreateGUIObject(string.format("lineGroup_%d", lineNumber), GUIParagraph, self.listLayout,
+    {
+        justification = GUIItem.Align_Min,
+        font = GetStyleFont(style),
+        color = GetStyleColor(style),
+        paragraphSize = Vector(self.scrollPane:GetSize().x - kScrollBarClearance, -1, 0),
+        text = lineGroup
+    })
+    table.insert(self.contentObs, lineGroupObj)
+
+end
+
+-- A single GUIItem renders at most 511 characters (bytes, so an accented letter counts as 2).
+-- Line groups below are kept under 500, but one long line would still become an oversized item on
+-- its own, so break any line longer than this at a space. A space byte never occurs inside a UTF-8
+-- multibyte character, so this cannot split an accented letter.
+local kMaxLineBytes = 480
+
+local function SplitLongLine(line)
+
+    local pieces = {}
+
+    while string.len(line) > kMaxLineBytes do
+
+        local cut
+        for pos = kMaxLineBytes, 1, -1 do
+            if string.sub(line, pos, pos) == " " then
+                cut = pos
+                break
+            end
+        end
+
+        if not cut then
+            break
+        end
+
+        table.insert(pieces, string.sub(line, 1, cut - 1))
+        line = string.sub(line, cut + 1)
+
+    end
+
+    table.insert(pieces, line)
+    return pieces
+
+end
+
+function GUISCAChangelogWindow:LoadChangelog(changelogText)
+
+    for i = 1, #self.contentObs do
+        self.contentObs[i]:Destroy()
+    end
+
+    self.contentObs = {}
+
+    local changelogLines = {}
+    for _, rawLine in ipairs(string.Explode(changelogText, "\n")) do
+        local rest, numTokens = SplitHeadingLevel(rawLine)
+        for _, piece in ipairs(SplitLongLine(rest)) do
+            table.insert(changelogLines, { piece, numTokens })
+        end
+    end
+
+    -- Keep track of consecutive lines with the same style so we don't create one GUI object per
+    -- line -- long changelogs would otherwise create hundreds of paragraph objects.
+    local lineGroup = ""
+    local lineGroupStyle = 0
+
+    for i = 1, #changelogLines do
+
+        local rest, numTokens = changelogLines[i][1], changelogLines[i][2]
+        local processedLine = string.format("  %s", rest)
+
+        if i == 1 then
+
+            lineGroup = processedLine
+            lineGroupStyle = numTokens
+
+        else
+
+            local groupLenIfAdded = string.len(lineGroup) + string.len(processedLine)
+            if numTokens ~= lineGroupStyle or i == #changelogLines or groupLenIfAdded > 500 then
+
+                AddLineGroup(self, lineGroup, lineGroupStyle, i)
+
+                lineGroup = processedLine
+                lineGroupStyle = numTokens
+
+            else
+                lineGroup = string.format("%s\n%s", lineGroup, processedLine)
+            end
+
+        end
+
+    end
+
+    AddLineGroup(self, lineGroup, lineGroupStyle, #changelogLines)
+
+end
+
+function GUISCAChangelogWindow:UpdateInnerBackgroundSize()
+    self.innerBack:SetSize(self:GetSize() - Vector(kInnerBackgroundSideSpacing * 2, kInnerBackgroundBottomSpacing + kInnerBackgroundTopSpacing, 0))
+    self.scrollPane:SetSize(self.innerBack:GetSize().x, self.innerBack:GetSize().y)
+end
+
+function GUISCAChangelogWindow:OnKey(key, down)
+    if key == InputKey.Escape then
+        self:Close()
+    end
+end
+
+function GUISCAChangelogWindow:Close()
+    self:StopListeningForKeyInteractions()
+    self:SetVisible(false)
+    self:ClearModal()
+    self:SetIsOpen(false)
+    self:FireEvent("Closed")
+end
+
+function GUISCAChangelogWindow:Open()
+    self:ListenForKeyInteractions()
+    self:SetVisible(true)
+    self:SetModal()
+    self:SetIsOpen(true)
+    self:FireEvent("Opened")
+end
