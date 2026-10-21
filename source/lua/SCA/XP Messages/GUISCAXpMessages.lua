@@ -8,9 +8,12 @@
 -- shooting the Hive builds up on one line. A line stays for kHoldTime seconds after its last gain,
 -- then fades out. At most kMaxLines show; a new one pushes the oldest out.
 --
--- Sizes and positions: the offset from the bottom of the screen is in plain pixels, like Combat's
--- XP bar (GUIExperienceBar.lua), so the lines always clear it. Fonts and line spacing follow the
--- game's GUI scale.
+-- Position: above vanilla's inventory (weapon icons and ammo for marines, abilities for aliens,
+-- Options > Advanced > INVENTORY), measured from the HUD itself every frame, so it follows the
+-- GUI scale, the resolution and the ammo modes. It is measured even while the inventory is faded
+-- out, so the lines don't jump each time it appears. With no inventory (option set to HIDE, Exo,
+-- dead) the lines sit just above Combat's XP bar instead. kBottomOffset is in plain pixels, like
+-- the XP bar (GUIExperienceBar.lua); fonts and line spacing follow the game's GUI scale.
 
 class 'GUISCAXpMessages' (GUIScript)
 
@@ -20,6 +23,7 @@ local kCatchUpHoldTime = 5
 local kFadeTime = 1
 
 local kBottomOffset = -82   -- center of the lowest line, clear of the XP bar and its level text
+local kInventoryGap = 8     -- between the top of the inventory and the lowest line
 local kLineSpacing = 34
 local kGap = 10             -- between the amount and the reason
 local kShadowOffset = 2
@@ -282,6 +286,99 @@ function GUISCAXpMessages:AddGain(message)
 
 end
 
+-- Inventory -----------------------------------------------------------------------------------
+
+local kInventoryHidden = 1          -- Options > Advanced > INVENTORY: HIDE
+local kInventoryAmmoModes = { [2] = true, [4] = true }   -- SHOW AMMO, ALWAYS ON + AMMO
+
+-- Vanilla's layout (Hud/GUIInventory.lua), for when the HUD can't be read: icons 120 above the
+-- bottom, 48 tall, ammo numbers in a row above them. Scaled by the GUI scale.
+local kEstimatedInventoryTop = 120 + 48
+local kEstimatedAmmoRow = 24
+
+local function GetInventoryMode()
+    return GUIInventory and GUIInventory.kInventoryMode or 0
+end
+
+local function GetShowsAmmo()
+    return kInventoryAmmoModes[GetInventoryMode()] and PlayerUI_GetTeamType() == kMarineTeamType
+end
+
+-- Screen Y (pixels from the top) of the top of the inventory as the HUD drew it, or nil when there
+-- is no inventory on screen.
+local function MeasureInventoryTop()
+
+    local hud = ClientUI.GetScript("Hud/Marine/GUIMarineHUD") or ClientUI.GetScript("GUIAlienHUD")
+    if not hud then
+        return nil, false
+    end
+
+    local inventory = hud.inventoryDisplay
+    if not inventory or not inventory.background or not inventory.background:GetIsVisible() then
+        return nil, true
+    end
+
+    local icons = inventory.inventoryIcons
+    if not icons or #icons == 0 then
+        return nil, true
+    end
+
+    local width, height = Client.GetScreenWidth(), Client.GetScreenHeight()
+    local showsAmmo = GetShowsAmmo()
+
+    local top
+    for _, icon in ipairs(icons) do
+        local y = icon.Graphic.guiItem:GetScreenPosition(width, height).y
+        if showsAmmo then
+            y = math.min(y, icon.AmmoDisplayCenter.guiItem:GetScreenPosition(width, height).y)
+        end
+        top = top and math.min(top, y) or y
+    end
+
+    return top, true
+
+end
+
+-- Vanilla's numbers, for a living marine or alien whose HUD was replaced by a mod.
+local function EstimateInventoryTop(scale)
+
+    local player = Client.GetLocalPlayer()
+    if not player or not player:GetIsAlive() or not (player:isa("Marine") or player:isa("Alien")) then
+        return nil
+    end
+
+    local height = kEstimatedInventoryTop + (GetShowsAmmo() and kEstimatedAmmoRow or 0)
+    return Client.GetScreenHeight() - height * scale
+
+end
+
+-- Offset from the bottom of the screen for the center of the lowest line.
+local function GetBottomOffset(scale)
+
+    if GetInventoryMode() == kInventoryHidden then
+        return kBottomOffset
+    end
+
+    -- A HUD mod could lay the inventory out differently; never let that break the XP lines.
+    local ok, top, hudFound = pcall(MeasureInventoryTop)
+    if not ok then
+        top, hudFound = nil, false
+    end
+    if not top and not hudFound then
+        top = EstimateInventoryTop(scale)
+    end
+
+    if not top then
+        return kBottomOffset
+    end
+
+    local offset = top - Client.GetScreenHeight() - (kInventoryGap + kLineSpacing / 2) * scale
+    return math.min(offset, kBottomOffset)
+
+end
+
+-- Update ---------------------------------------------------------------------------------------
+
 function GUISCAXpMessages:Update(deltaTime)
 
     local now = Shared.GetTime()
@@ -299,10 +396,11 @@ function GUISCAXpMessages:Update(deltaTime)
 
     -- Newest line at the bottom, older ones above it.
     local count = #self.lines
+    local bottomOffset = count > 0 and GetBottomOffset(scale) or kBottomOffset
     for i, line in ipairs(self.lines) do
 
         local row = count - i
-        local y = kBottomOffset - row * kLineSpacing * scale
+        local y = bottomOffset - row * kLineSpacing * scale
 
         local alpha = 1
         if now > line.holdUntil then
