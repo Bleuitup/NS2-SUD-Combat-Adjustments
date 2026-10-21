@@ -67,6 +67,7 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 ### Experience
 - **XP messages:** every XP gain shows at the top of the screen, under the round timer, with where it came from: a kill, an assist, a teammate's kill nearby, damaging the Hive, Command Station or Armory, welding, healing or catch-up. Damage, welding and healing add up on one line. This replaces Combat's +XP popup under the crosshair, which only showed with the ASSIST SCORE POPUP option on, and catch-up no longer posts in chat.
 - **Assists:** anyone who dealt more than 10% of an enemy's health and armor since it was last at full health now shares the kill XP, even if far away or already dead. Before, only the killer and teammates close to the kill shared it
+- **Line-of-sight kill XP** removed. Combat also shared a kill's XP with teammates up to 40m away who could see it, which covered long-range help before assists counted. Teammates within 15m of a kill still share it.
 - **Catch-up:** every 5 minutes, anyone below 61% of the average XP is raised to it, as Combat intended. Combat's own check almost never fired
 
 ### Spawn protection

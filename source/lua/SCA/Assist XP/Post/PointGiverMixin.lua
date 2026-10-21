@@ -10,6 +10,9 @@ if not Server then return end
 -- if they have died since. The split is Combat's: each receiver gets 10% of the kill's value plus
 -- an equal share of the other 90%, plus their own level bonus.
 --
+-- The 40 m line-of-sight share is dropped: it stood in for long-range help before damage counted,
+-- and the assisters above cover that now. Teammates within 15 m still share.
+--
 -- Only damage since the victim was last at full health and armor counts (see Player_Server.lua
 -- and NS2Gamerules.lua in this piece, for players and for everything else). The scoreboard's
 -- assist count is vanilla's and is not changed.
@@ -102,12 +105,12 @@ function SCA_GetXpAssisters(dying)
 
 end
 
--- Combat's GiveXpForKill with the assisters added to the receivers.
+-- Combat's GiveXpForKill with the assisters added to the receivers and no line-of-sight share.
 function PointGiverMixin:GiveXpForKill(dying, killer)
 
     local baseXp = GetXpValue(dying)
 
-    local playersInRange = GetEntitiesForTeamWithinRange("Player", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), assistLOSXPRange)
+    local playersInRange = GetEntitiesForTeamWithinRange("Player", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), assistXPRange)
 
     local receivers = {}
     local function Add(player)
@@ -124,8 +127,8 @@ function PointGiverMixin:GiveXpForKill(dying, killer)
     for _, player in ipairs(playersInRange) do
         if player:GetIsAlive() and killer ~= player then
 
-            -- check if we're in the minimum assist XP range, if not, do a LOS check
-            if (self:GetOrigin() - player:GetOrigin()):GetLength() < assistXPRange or GetCanSeeEntity(player, self) then
+            -- within 15 m, Combat's own close-range check
+            if (self:GetOrigin() - player:GetOrigin()):GetLength() < assistXPRange then
                 Add(player)
             end
 
