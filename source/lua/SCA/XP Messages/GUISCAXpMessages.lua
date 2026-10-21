@@ -1,4 +1,5 @@
--- Lines above Combat's XP bar saying how much XP you just got and why:
+-- Lines at the top of the screen, under Combat's round timer, saying how much XP you just got and
+-- why:
 --
 --     +26 XP  Killed a Lerk
 --     +8.4 XP  Damaging the Hive
@@ -6,24 +7,28 @@
 -- The amount is in the larger font, the reason in the smaller one. A new gain of the same kind on
 -- the same target adds to the line already showing instead of starting a new one, so welding or
 -- shooting the Hive builds up on one line. A line stays for kHoldTime seconds after its last gain,
--- then fades out. At most kMaxLines show; a new one pushes the oldest out.
+-- then fades out. The newest line is at the top; older ones move down. At most kMaxLines show,
+-- and a new one pushes the oldest out.
 --
--- Position: above vanilla's inventory (weapon icons and ammo for marines, abilities for aliens,
--- Options > Advanced > INVENTORY), measured from the HUD itself every frame, so it follows the
--- GUI scale, the resolution and the ammo modes. It is measured even while the inventory is faded
--- out, so the lines don't jump each time it appears. With no inventory (option set to HIDE, Exo,
--- dead) the lines sit just above Combat's XP bar instead. kBottomOffset is in plain pixels, like
--- the XP bar (GUIExperienceBar.lua); fonts and line spacing follow the game's GUI scale.
+-- Position, all scaled with the GUI (1:1 at 1080p):
+--   alive: just under the round timer (GUIGameTimeCountDown.lua, 50 tall at the top).
+--   dead:  the timer is hidden and Combat puts the "Following <name>" spectator banner at 60-120
+--          (FileHooks/Post/GUIFirstPersonSpectate.lua), so the lines go under that, and only
+--          kMaxLinesDead show so the last one stays above vanilla's "Waiting to spawn" banner at
+--          about 240.
+-- The bottom of the screen is left alone: the inventory, a target's health bar and the XP bar
+-- all live there.
 
 class 'GUISCAXpMessages' (GUIScript)
 
 local kMaxLines = 4
+local kMaxLinesDead = 3
 local kHoldTime = 3
 local kCatchUpHoldTime = 5
 local kFadeTime = 1
 
-local kBottomOffset = -82   -- center of the lowest line, clear of the XP bar and its level text
-local kInventoryGap = 8     -- between the top of the inventory and the lowest line
+local kTopAlive = 50 + 8    -- under the round timer, plus a gap
+local kTopDead = 120 + 8    -- under the spectator banner, plus a gap
 local kLineSpacing = 34
 local kGap = 10             -- between the amount and the reason
 local kShadowOffset = 2
@@ -179,7 +184,7 @@ end
 local function CreateText(font)
     local item = GUIManager.CreateTextItem()
     item:SetFontName(font)
-    item:SetAnchor(GUIItem.Middle, GUIItem.Bottom)
+    item:SetAnchor(GUIItem.Middle, GUIItem.Top)
     item:SetTextAlignmentX(GUIItem.Align_Min)
     item:SetTextAlignmentY(GUIItem.Align_Center)
     return item
@@ -213,6 +218,23 @@ local function GetAmountColor()
         return kAlienTeamColorFloat
     end
     return kMarineTeamColorFloat
+end
+
+local function GetIsDead()
+    local player = Client.GetLocalPlayer()
+    return not player or not player:GetIsAlive()
+end
+
+local function GetMaxLines()
+    return GetIsDead() and kMaxLinesDead or kMaxLines
+end
+
+-- Drops the oldest lines until no more than maxLines are left.
+function GUISCAXpMessages:TrimLines(maxLines)
+    while #self.lines > math.max(maxLines, 0) do
+        DestroyLine(self.lines[1])
+        table.remove(self.lines, 1)
+    end
 end
 
 -- Sets the line's text and works out its width, so the amount and reason sit centered as a pair.
@@ -258,10 +280,7 @@ function GUISCAXpMessages:AddGain(message)
         end
     end
 
-    if #self.lines >= kMaxLines then
-        DestroyLine(self.lines[1])
-        table.remove(self.lines, 1)
-    end
+    self:TrimLines(GetMaxLines() - 1)
 
     local line =
     {
@@ -286,97 +305,6 @@ function GUISCAXpMessages:AddGain(message)
 
 end
 
--- Inventory -----------------------------------------------------------------------------------
-
-local kInventoryHidden = 1          -- Options > Advanced > INVENTORY: HIDE
-local kInventoryAmmoModes = { [2] = true, [4] = true }   -- SHOW AMMO, ALWAYS ON + AMMO
-
--- Vanilla's layout (Hud/GUIInventory.lua), for when the HUD can't be read: icons 120 above the
--- bottom, 48 tall, ammo numbers in a row above them. Scaled by the GUI scale.
-local kEstimatedInventoryTop = 120 + 48
-local kEstimatedAmmoRow = 24
-
-local function GetInventoryMode()
-    return GUIInventory and GUIInventory.kInventoryMode or 0
-end
-
-local function GetShowsAmmo()
-    return kInventoryAmmoModes[GetInventoryMode()] and PlayerUI_GetTeamType() == kMarineTeamType
-end
-
--- Screen Y (pixels from the top) of the top of the inventory as the HUD drew it, or nil when there
--- is no inventory on screen.
-local function MeasureInventoryTop()
-
-    local hud = ClientUI.GetScript("Hud/Marine/GUIMarineHUD") or ClientUI.GetScript("GUIAlienHUD")
-    if not hud then
-        return nil, false
-    end
-
-    local inventory = hud.inventoryDisplay
-    if not inventory or not inventory.background or not inventory.background:GetIsVisible() then
-        return nil, true
-    end
-
-    local icons = inventory.inventoryIcons
-    if not icons or #icons == 0 then
-        return nil, true
-    end
-
-    local width, height = Client.GetScreenWidth(), Client.GetScreenHeight()
-    local showsAmmo = GetShowsAmmo()
-
-    local top
-    for _, icon in ipairs(icons) do
-        local y = icon.Graphic.guiItem:GetScreenPosition(width, height).y
-        if showsAmmo then
-            y = math.min(y, icon.AmmoDisplayCenter.guiItem:GetScreenPosition(width, height).y)
-        end
-        top = top and math.min(top, y) or y
-    end
-
-    return top, true
-
-end
-
--- Vanilla's numbers, for a living marine or alien whose HUD was replaced by a mod.
-local function EstimateInventoryTop(scale)
-
-    local player = Client.GetLocalPlayer()
-    if not player or not player:GetIsAlive() or not (player:isa("Marine") or player:isa("Alien")) then
-        return nil
-    end
-
-    local height = kEstimatedInventoryTop + (GetShowsAmmo() and kEstimatedAmmoRow or 0)
-    return Client.GetScreenHeight() - height * scale
-
-end
-
--- Offset from the bottom of the screen for the center of the lowest line.
-local function GetBottomOffset(scale)
-
-    if GetInventoryMode() == kInventoryHidden then
-        return kBottomOffset
-    end
-
-    -- A HUD mod could lay the inventory out differently; never let that break the XP lines.
-    local ok, top, hudFound = pcall(MeasureInventoryTop)
-    if not ok then
-        top, hudFound = nil, false
-    end
-    if not top and not hudFound then
-        top = EstimateInventoryTop(scale)
-    end
-
-    if not top then
-        return kBottomOffset
-    end
-
-    local offset = top - Client.GetScreenHeight() - (kInventoryGap + kLineSpacing / 2) * scale
-    return math.min(offset, kBottomOffset)
-
-end
-
 -- Update ---------------------------------------------------------------------------------------
 
 function GUISCAXpMessages:Update(deltaTime)
@@ -385,7 +313,7 @@ function GUISCAXpMessages:Update(deltaTime)
     local scale = GUIScale(1)
     local amountColor = GetAmountColor()
 
-    -- Drop lines that have faded out.
+    -- Drop lines that have faded out, and the oldest ones past the limit (dying lowers it).
     for i = #self.lines, 1, -1 do
         local line = self.lines[i]
         if now >= line.holdUntil + kFadeTime then
@@ -393,14 +321,15 @@ function GUISCAXpMessages:Update(deltaTime)
             table.remove(self.lines, i)
         end
     end
+    self:TrimLines(GetMaxLines())
 
-    -- Newest line at the bottom, older ones above it.
+    -- Newest line at the top, older ones below it.
+    local top = (GetIsDead() and kTopDead or kTopAlive) * scale
     local count = #self.lines
-    local bottomOffset = count > 0 and GetBottomOffset(scale) or kBottomOffset
     for i, line in ipairs(self.lines) do
 
         local row = count - i
-        local y = bottomOffset - row * kLineSpacing * scale
+        local y = top + (row + 0.5) * kLineSpacing * scale
 
         local alpha = 1
         if now > line.holdUntil then
