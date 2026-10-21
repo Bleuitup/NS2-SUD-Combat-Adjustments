@@ -1,6 +1,6 @@
 -- The build text in the top left corner of the menu, e.g.
---   Build 344 - NS2 Combat 6.2 + NS2 SUD Combat Adjustments v1.14
-local kSCAVersion = "1.15 test" -- update on every release
+--   Build 344 - NS2 Combat 6.2 + NS2 SUD Combat Adjustments v1.15
+local kSCAVersion = "1.15" -- update on every release
 
 local oldInitialize = GUIFeedback.Initialize
 function GUIFeedback:Initialize()
