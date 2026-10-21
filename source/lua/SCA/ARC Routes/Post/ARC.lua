@@ -10,6 +10,11 @@
 -- The way from the spawn to that approach is random too, and not the same series of rooms as the
 -- previous ARC's where there is a choice.
 --
+-- Where every route reaches the hive's room through the same room (co_legacy: Hive Access), the
+-- approaches are counted one room further back instead: the rooms that lead into that one
+-- (Central Room, Server Room, Down Access), so ARCs take turns entering it from each side. And
+-- further back again if those are all the same too, until the routes split.
+--
 -- Once it enters the hive's room, Combat's own behavior takes over again:
 -- head for the hive and deploy in range. Combat's "deploy as soon as a hive is in range" check
 -- keeps working the whole way.
@@ -22,6 +27,7 @@
 --
 -- Each ARC logs its route to the server console, e.g.
 --   [SCA] ARC route: Marine Start > Atrium > Cargo > Hive (from Cargo, one of 2 approaches; one of 3 routes that way)
+--   [SCA] ARC route: Marine start > Pipe Corridor > Down Access > Hive Access > Alien Start (from Down Access > Hive Access, one of 3 approaches; ...)
 
 if not Server then return end
 
@@ -125,9 +131,38 @@ function SCA_PickArcRoute(routes, previousKey, random)
 
 end
 
--- The room a route enters the hive's room from.
-local function GetApproach(route)
-    return route[#route - 1]
+-- The last rooms of a route before the hive's room: depth 1 is the room it enters the hive's room
+-- from, depth 2 adds the room before that ("Down Access > Hive Access"), and so on.
+local function GetApproach(route, depth)
+    local first = math.max(1, #route - depth)
+    return table.concat(route, " > ", first, #route - 1)
+end
+
+-- How far back from the hive's room the routes first split into more than one approach. 1 on most
+-- maps; more where every route funnels through the same room(s) before the hive.
+function SCA_GetArcApproachDepth(routes)
+
+    local longest = 0
+    for _, route in ipairs(routes) do
+        longest = math.max(longest, #route - 1)
+    end
+
+    for depth = 1, longest do
+        local seen, count = {}, 0
+        for _, route in ipairs(routes) do
+            local approach = GetApproach(route, depth)
+            if not seen[approach] then
+                seen[approach] = true
+                count = count + 1
+            end
+        end
+        if count > 1 then
+            return depth
+        end
+    end
+
+    return 1
+
 end
 
 -- Picks the approach for the next ARC from a shuffled cycle of the approaches that have routes.
@@ -225,11 +260,13 @@ local function PlanRoute(arc)
         routesCache[cacheKey] = routes
     end
 
-    -- Group the routes by the room they enter the hive's room from.
+    -- Group the routes by the room they enter the hive's room from (or the rooms before it, where
+    -- they all enter through the same one).
+    local depth = SCA_GetArcApproachDepth(routes)
     local routesByApproach = {}
     local approaches = {}
     for _, route in ipairs(routes) do
-        local approach = GetApproach(route)
+        local approach = GetApproach(route, depth)
         if not routesByApproach[approach] then
             routesByApproach[approach] = {}
             table.insert(approaches, approach)
