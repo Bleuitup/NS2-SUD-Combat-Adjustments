@@ -1,6 +1,7 @@
 -- Per-player biomass. Combat has no hives to count, so a player's biomass follows the tiers they
--- bought: 1 at the start, 5 with tier 2, 9 with tier 3. Carapace armor (below) and biomass health
--- (BiomassHealthMixin.lua) both scale from it the way they do in vanilla.
+-- bought: 1 at the start, 5 with tier 2, 10 with tier 3 (+4, then +5, as Combat counts it for
+-- health). Carapace armor (below) and biomass health (BiomassHealthMixin.lua) both scale from it
+-- the way they do in vanilla.
 function Alien:GetCombatBiomassLevel()
 
     local level = 1
@@ -10,7 +11,7 @@ function Alien:GetCombatBiomassLevel()
     end
 
     if self.combatThreeHives then
-        level = level + 4
+        level = level + 5
     end
 
     return level

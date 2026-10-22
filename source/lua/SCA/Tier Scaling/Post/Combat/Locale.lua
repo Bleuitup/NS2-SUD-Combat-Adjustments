@@ -1,5 +1,5 @@
--- Tooltips of the Tier 2 and Tier 3 upgrades in the evolve menu. Combat's say Tier 3 gives
--- +5 biomass and names Xenocide; here each Tier gives +4 biomass, to health and to Carapace
+-- Tooltips of the Tier 2 and Tier 3 upgrades in the evolve menu. Combat's say the biomass is for
+-- health only and name Xenocide for Tier 3; here the biomass also counts for Carapace
 -- (BiomassHealthMixin.lua and Alien.lua next to this), and Xenocide is gone.
 
 local kTooltips =
@@ -7,13 +7,13 @@ local kTooltips =
     enUS =
     {
         BIOMASS_TWO_TOOLTIP = "Unlocks tier 2 abilities for your life form such as Leap and Metabolize. Also gives +4 biomass for your health and Carapace.",
-        BIOMASS_THREE_TOOLTIP = "Unlocks tier 3 abilities for your life form such as Stab and Stomp. Also gives +4 biomass for your health and Carapace.",
+        BIOMASS_THREE_TOOLTIP = "Unlocks tier 3 abilities for your life form such as Stab and Stomp. Also gives +5 biomass for your health and Carapace.",
     },
 
     esES =
     {
         BIOMASS_TWO_TOOLTIP = "Desbloquea las habilidades de rango 2 para tu clase, como Leap y Metabolize. También agrega +4 de biomasa a tu vida y a Carapace.",
-        BIOMASS_THREE_TOOLTIP = "Desbloquea las habilidades de rango 3 para tu clase, como Stab y Stomp. También agrega +4 de biomasa a tu vida y a Carapace.",
+        BIOMASS_THREE_TOOLTIP = "Desbloquea las habilidades de rango 3 para tu clase, como Stab y Stomp. También agrega +5 de biomasa a tu vida y a Carapace.",
     },
 }
 

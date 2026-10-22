@@ -1,7 +1,7 @@
 if Server then
 
-    -- Biomass health from the player's own tiers (see Alien:GetCombatBiomassLevel): tier 2 and
-    -- tier 3 add four biomass levels each. Combat's version adds four, then five.
+    -- Biomass health from the player's own tiers (see Alien:GetCombatBiomassLevel): tier 2 adds
+    -- four biomass levels and tier 3 five, as in Combat. The same level drives Carapace.
     function BiomassHealthMixin:UpdateHealthAmount()
 
         local bioMassLevel = self.GetCombatBiomassLevel and self:GetCombatBiomassLevel() or 1

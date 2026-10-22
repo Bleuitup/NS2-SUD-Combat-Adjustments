@@ -22,12 +22,10 @@ Each ARC writes one line to the server console with the route it takes, for exam
 
 **Traits**
 - **No more stacking one hive type.** You can't take a second Crag, Shift or Shade trait until you have one of each, and no third until you have two of each. Stacking Carapace, Regeneration and Vampirism made aliens far too hard to kill. Locked traits show in red in the evolve menu, and hovering one tells you what to take first.
-- **Carapace** now emphasizes biomass synergy. As in vanilla, it gives a base amount of armor plus more for every biomass level, and your biomass here is 1 at the start, 5 with Tier 2 and 9 with Tier 3 (+4 per Tier). Skulk +6 / +10 / +14 armor, Onos +70 / +150 / +230. Combat gave the biomass 12 amount from the first point (Skulk +17, Onos +290).
-- **Tier health:** each Tier upgrade (Tier 2 and Tier 3 abilities) gives the health of 4 biomass levels: Skulk +12, Gorge +8, Lerk +8, Fade +20, Onos +200 per Tier. In Combat, Tier 3 was worth 5 levels.
-- **Focus:** 2 points -> 1, and its bonus is vanilla's +33% (Combat had +34%).
+- **Carapace** now emphasizes biomass synergy. As in vanilla, it gives a base amount of armor plus more for every biomass level, and your biomass here is 1 at the start, 5 with Tier 2 and 10 with Tier 3 (+4, then +5). Skulk +6 / +10 / +15 armor, Onos +70 / +150 / +250. Combat gave the biomass 12 amount from the first point (Skulk +17, Onos +290).
+- **Tier 3:** 2 points -> 3
+- **Focus:** bonus is vanilla's +33% (Combat had +34%).
 - **Aura** only shows an enemy's health while that enemy is parasited *(originally from CompMod, now in nu vanilla post b344)*.
-
-Why Focus changed: focus being 2 points is a vestige from the time focus boosted damage by +50%, resulting in 112.5 damage swipes / bites, meaning a clean 1hk on an unarmored marine. UWE nerfed it, and rightfully so, so that it would do slightly less than 100 damage per hit. The current focus mirrors vanilla one.
 
 **Skulk**
 - **Leap energy:** 45 -> 55 *(CompMod value)*
@@ -72,9 +70,10 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 
 ### Spawn protection
 - Stays at Combat's 3 seconds for the first 10 minutes of a 25 minute round
-- 10 to 15 minutes: 2.4 seconds (-20%)
-- 15 to 20 minutes: 1.8 seconds (-40%)
-- From 20 minutes on, overtime included: 1.2 seconds (-60%)
+- 10 to 15 minutes: Marines 2.4 seconds (-20%), Aliens 2.7 seconds (-10%)
+- 15 to 20 minutes: Marines 1.8 seconds (-40%), Aliens 2.4 seconds (-20%)
+- From 20 minutes on, overtime included: Marines 1.2 seconds (-60%), Aliens 2.1 seconds (-30%)
+- Aliens lose half as much as Marines: Marines respawn with all their gear, Aliens come back as Skulks
 - A shorter or longer round moves the steps with it: they come at 40%, 60% and 80% of the round
 - Everyone gets a warning 30 seconds before each drop
 

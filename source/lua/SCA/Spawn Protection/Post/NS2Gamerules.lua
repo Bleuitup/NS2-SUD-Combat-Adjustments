@@ -4,37 +4,45 @@ if not Server then return end
 -- Spawn protection that wears off late in the round.
 --
 -- The round's time limit is split into five equal parts. For the first two, Combat's own time
--- applies. The start of each of the last three takes a fifth of that time away. The last step
+-- applies. The start of each of the last three takes a share of that time away. The last step
 -- stays for the rest of the round and for overtime.
 --
--- With Combat's 3 seconds and a 25 minute round: 3 seconds until 10:00, then 2.4 (-20%) from
--- 10:00, 1.8 (-40%) from 15:00 and 1.2 (-60%) from 20:00 on. A different time limit moves the
--- drops with it: they always sit at 40%, 60% and 80% of the round.
+-- Marines lose a fifth each time, aliens half that: aliens come back as skulks, marines with all
+-- their gear. With Combat's 3 seconds and a 25 minute round:
+--   from 10:00   marines 2.4 (-20%)   aliens 2.7 (-10%)
+--   from 15:00   marines 1.8 (-40%)   aliens 2.4 (-20%)
+--   from 20:00   marines 1.2 (-60%)   aliens 2.1 (-30%)
+-- A different time limit moves the drops with it: they always sit at 40%, 60% and 80% of the round.
 --
--- Combat reads kCombatMarineSpawnProtectTime for both teams when a player spawns, so changing
--- that one value is enough.
+-- Combat reads kCombatMarineSpawnProtectTime for both teams when a player spawns. That value is
+-- the marines' time here; Player_Server.lua in this piece gives aliens theirs.
 
 local kIntervals = 5       -- equal parts the round is split into
 local kFullIntervals = 2   -- parts that pass before the first drop
 local kDrops = 3
-local kDropScalar = 0.2    -- share of Combat's own time each drop takes away
+local kDropScalar = { [kTeam1Index] = 0.2, [kTeam2Index] = 0.1 }   -- share of Combat's time each drop takes away
 local kWarningTime = 30
 
 local combatTime      -- Combat's own spawn protection time
-local appliedDrops    -- number of drops in effect
+local appliedDrops = 0 -- number of drops in effect
 local warnedDrop      -- drop the last warning was sent for
 
-local function GetTimeAfterDrops(drops)
-    return combatTime * (1 - kDropScalar * drops)
+local function GetTimeAfterDrops(teamNumber, drops)
+    return (combatTime or kCombatMarineSpawnProtectTime) * (1 - (kDropScalar[teamNumber] or kDropScalar[kTeam1Index]) * drops)
 end
 
-local function GetTimeText(drops)
-    return string.format("%.1f seconds", GetTimeAfterDrops(drops))
+-- Spawn protection for a player of this team right now.
+function SCA_GetSpawnProtectTime(teamNumber)
+    return GetTimeAfterDrops(teamNumber, appliedDrops)
 end
 
-local function Announce(message)
+-- Each team hears its own time.
+local function Announce(format, drops)
     for _, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
-        player:SendDirectMessage(message)
+        local teamNumber = player:GetTeamNumber()
+        if kDropScalar[teamNumber] then
+            player:SendDirectMessage(string.format(format, string.format("%.1f seconds", GetTimeAfterDrops(teamNumber, drops))))
+        end
     end
 end
 
@@ -62,12 +70,12 @@ function NS2Gamerules:OnUpdate(timePassed)
            and intervalLength > kWarningTime and gameLength >= nextDropTime - kWarningTime then
 
             warnedDrop = nextDrop
-            Announce(string.format("Spawn protection drops to %s in %d seconds.", GetTimeText(nextDrop), kWarningTime))
+            Announce("Spawn protection drops to %s in " .. kWarningTime .. " seconds.", nextDrop)
 
         end
 
-        if appliedDrops and drops > appliedDrops then
-            Announce(string.format("Spawn protection is now %s.", GetTimeText(drops)))
+        if drops > appliedDrops then
+            Announce("Spawn protection is now %s.", drops)
         end
 
     else
@@ -76,7 +84,7 @@ function NS2Gamerules:OnUpdate(timePassed)
 
     if drops ~= appliedDrops then
         appliedDrops = drops
-        kCombatMarineSpawnProtectTime = GetTimeAfterDrops(drops)
+        kCombatMarineSpawnProtectTime = GetTimeAfterDrops(kTeam1Index, drops)
     end
 
 end
