@@ -60,7 +60,8 @@ Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet t
 
 [h2]Support[/h2]
 [list]
-[*][b]Improved Resupply[/b] also gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
+[*][b]Resupply[/b] now also lets you call Medpacks and Ammopacks from your request menu (what Combat's Improved Resupply did), and gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
+[*][b]Improved Resupply[/b] now lets you call a second pack: you can call whenever 10 seconds or less are left on your resupply timer, and each call adds 5 seconds, up to 15. Combat allowed one call, only at 5 seconds or less
 [*][b]Welding[/b] gives twice the XP, on teammates and on structures
 [*][b]ARC[/b] health 1000 -> 1500, armor 200 -> 500
 [*][b]ARC routes[/b] each ARC heads for the hive from a different side in turn, by a random route through the map's rooms, so Aliens can't just wait in one corridor. It still deploys on the hive as before

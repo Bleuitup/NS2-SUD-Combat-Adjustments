@@ -56,7 +56,8 @@ Each ARC writes one line to the server console with the route it takes, for exam
 Why the Machine Gun changed: when Combat was made, it did 12 damage per bullet to lifeforms and was priced as an upgrade over the Shotgun. Vanilla has since nerfed it to 10.5, so it is priced as the Shotgun's equal here.
 
 **Support**
-- **Improved Resupply** also gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
+- **Resupply** now also lets you call Medpacks and Ammopacks from your request menu (what Combat's Improved Resupply did), and gives you Medtech #2: your Medpacks heal 40 at once and 10 over time (was 25 and 25)
+- **Improved Resupply** now lets you call a second pack: you can call whenever 10 seconds or less are left on your resupply timer, and each call adds 5 seconds, up to 15. Combat allowed one call, only at 5 seconds or less
 - **Welding** gives twice the XP, on teammates and on structures
 - **ARC:** health 1000 -> 1500, armor 200 -> 500
 - **ARC routes:** each ARC heads for the hive from a different side in turn, by a random route through the map's rooms, so Aliens can't just wait in one corridor. It still deploys on the hive as before

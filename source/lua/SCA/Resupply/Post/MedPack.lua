@@ -1,4 +1,4 @@
--- Improved Resupply also makes Medpacks heal more up front, like Medpack Tech #2 on the pub:
+-- Resupply also makes Medpacks heal more up front, like Medpack Tech #2 on the pub:
 -- 40 at once and 10 over time instead of 25 and 25. It goes by who picks the Medpack up, so it
 -- covers both the automatic resupply and the Medpack an owner calls for.
 local kImprovedMedpackHeal = 40
